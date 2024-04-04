@@ -1,0 +1,29 @@
+CMake Error at D:/Users/waelk/v5.2.1/esp-idf/tools/cmake/build.cmake:544 (message):
+  ERROR:
+
+          Some components (espressif/esp-zigbee-lib) in the "managed_components" directory were modified         on the disk since the last run of the CMake. Content of this directory is managed automatically.
+
+  
+
+          If you want to keep the changes, you can move the directory with the component to the "components"         directory of your project.
+
+  
+
+          I.E. for "espressif__esp-zigbee-lib" run:
+          mv C:\Users\waelk\zigbee_test\managed_components\espressif__esp-zigbee-lib C:\Users\waelk\zigbee_test\components\espressif__esp-zigbee-lib
+
+  
+
+          Or, if you want to discard the changes remove the ".component_hash" file from the component's directory.
+
+  
+
+          I.E. for "espressif__esp-zigbee-lib" run:
+          rm C:\Users\waelk\zigbee_test\managed_components\espressif__esp-zigbee-lib\.component_hash
+          
+
+Call Stack (most recent call first):
+  D:/Users/waelk/v5.2.1/esp-idf/tools/cmake/project.cmake:605 (idf_build_process)
+  CMakeLists.txt:6 (project)
+
+

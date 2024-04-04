@@ -1,0 +1,40 @@
+{
+    "C_Cpp.intelliSenseEngine": "default",
+    "idf.adapterTargetName": "esp32c6",
+    "idf.customExtraPaths": "d:\\idf-tools\\tools\\xtensa-esp-elf-gdb\\12.1_20231023\\xtensa-esp-elf-gdb\\bin;d:\\idf-tools\\tools\\riscv32-esp-elf-gdb\\12.1_20231023\\riscv32-esp-elf-gdb\\bin;d:\\idf-tools\\tools\\xtensa-esp-elf\\esp-13.2.0_20230928\\xtensa-esp-elf\\bin;d:\\idf-tools\\tools\\riscv32-esp-elf\\esp-13.2.0_20230928\\riscv32-esp-elf\\bin;d:\\idf-tools\\tools\\esp32ulp-elf\\2.35_20220830\\esp32ulp-elf\\bin;d:\\idf-tools\\tools\\cmake\\3.24.0\\bin;d:\\idf-tools\\tools\\openocd-esp32\\v0.12.0-esp32-20230921\\openocd-esp32\\bin;d:\\idf-tools\\tools\\ninja\\1.11.1;d:\\idf-tools\\tools\\idf-exe\\1.0.3;d:\\idf-tools\\tools\\ccache\\4.8\\ccache-4.8-windows-x86_64;d:\\idf-tools\\tools\\dfu-util\\0.11\\dfu-util-0.11-win64;d:\\idf-tools\\tools\\esp-rom-elfs\\20230320",
+    "idf.customExtraVars": {
+        "OPENOCD_SCRIPTS": "d:\\idf-tools\\tools\\openocd-esp32\\v0.12.0-esp32-20230921/openocd-esp32/share/openocd/scripts",
+        "IDF_CCACHE_ENABLE": "1",
+        "ESP_ROM_ELF_DIR": "d:\\idf-tools\\tools\\esp-rom-elfs\\20230320/"
+    },
+    "idf.espIdfPathWin": "D:/Users/waelk/v5.2.1/esp-idf",
+    "idf.openOcdConfigs": [
+        "interface/ftdi/esp32_devkitj_v1.cfg",
+        "target/esp32.cfg"
+    ],
+    "idf.pythonBinPathWin": "d:\\idf-tools\\python_env\\idf5.2_py3.11_env\\Scripts\\python.exe",
+    "idf.toolsPathWin": "d:\\idf-tools",
+    "files.associations": {
+        "esp_zb_light.h": "c",
+        "light_driver.h": "c",
+        "esp_zigbee_ha_standard.h": "c",
+        "esp_zb_temperature_sensor.h": "c",
+        "esp_system.h": "c",
+        "string.h": "c",
+        "bme680.h": "c",
+        "stdio.h": "c",
+        "i2cdev.h": "c",
+        "esp_log.h": "c",
+        "freertos.h": "c",
+        "esp_err.h": "c",
+        "esp_idf_lib_helpers.h": "c",
+        "esp_zigbee_core.h": "c",
+        "inttypes.h": "c",
+        "task.h": "c",
+        "esp_zigbee_zcl_temperature_meas.h": "c",
+        "stdbool.h": "c",
+        "esp_compiler.h": "c"
+    },
+    "idf.portWin": "COM4",
+    "idf.flashType": "UART"
+}
