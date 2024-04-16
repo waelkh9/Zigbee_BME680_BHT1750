@@ -1,7 +1,7 @@
 {
     "version":            "1.1",
     "project_name":       "zigbee_test",
-    "project_version":    "1",
+    "project_version":    "b141bfd-dirty",
     "project_path":       "C:/Users/waelk/zigbee_test",
     "idf_path":           "D:/Users/waelk/v5.2.1/esp-idf",
     "build_dir":          "C:/Users/waelk/zigbee_test/build",
@@ -895,7 +895,7 @@
             "managed_reqs": [],
             "managed_priv_reqs": [ "espressif__esp-zboss-lib", "espressif__esp-zigbee-lib", "espressif__led_strip" ],
             "file": "C:/Users/waelk/zigbee_test/build/esp-idf/main/libmain.a",
-            "sources": [ "C:/Users/waelk/zigbee_test/main/esp_zb_light.c", "C:/Users/waelk/zigbee_test/main/light_driver.c" ],
+            "sources": [ "C:/Users/waelk/zigbee_test/main/main.c" ],
             "include_dirs": [ "." ]
         },
         "mbedtls": {
@@ -2229,18 +2229,6 @@
             "managed_priv_reqs": [],
             "include_dirs": [ "." ]
         },
-        "espressif__led_strip": {
-            "alias": "idf::espressif__led_strip",
-            "target": "___idf_espressif__led_strip",
-            "prefix": "idf",
-            "dir": "C:/Users/waelk/zigbee_test/managed_components/espressif__led_strip",
-            "lib": "__idf_espressif__led_strip",
-            "reqs": [],
-            "priv_reqs": [ "driver" ],
-            "managed_reqs": [],
-            "managed_priv_reqs": [],
-            "include_dirs": [ "include", "interface" ]
-        },
         "espressif__esp-zboss-lib": {
             "alias": "idf::espressif__esp-zboss-lib",
             "target": "___idf_espressif__esp-zboss-lib",
@@ -2264,6 +2252,18 @@
             "managed_reqs": [],
             "managed_priv_reqs": [],
             "include_dirs": [ "include" ]
+        },
+        "espressif__led_strip": {
+            "alias": "idf::espressif__led_strip",
+            "target": "___idf_espressif__led_strip",
+            "prefix": "idf",
+            "dir": "C:/Users/waelk/zigbee_test/managed_components/espressif__led_strip",
+            "lib": "__idf_espressif__led_strip",
+            "reqs": [],
+            "priv_reqs": [ "driver" ],
+            "managed_reqs": [],
+            "managed_priv_reqs": [],
+            "include_dirs": [ "include", "interface" ]
         }
     },
     "debug_prefix_map_gdbinit": ""

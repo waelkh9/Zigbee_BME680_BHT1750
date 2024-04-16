@@ -29,7 +29,7 @@
  * The string should be started with the length of its own.
  */
 #define MANUFACTURER_NAME               "\x0B""ESPRESSIF"
-#define MODEL_IDENTIFIER                "\x09"CONF<<IG_IDF_TARGET
+#define MODEL_IDENTIFIER                "\x09"CONFIG_IDF_TARGET
 
 #define ESP_ZB_ZED_CONFIG()                                         \
     {                                                               \
