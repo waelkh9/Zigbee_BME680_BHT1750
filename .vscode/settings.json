@@ -35,6 +35,6 @@
         "stdbool.h": "c",
         "esp_compiler.h": "c"
     },
-    "idf.portWin": "COM4",
+    "idf.portWin": "COM9",
     "idf.flashType": "UART"
 }

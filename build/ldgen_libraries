@@ -64,4 +64,5 @@ C:/Users/waelk/zigbee_test/build/esp-idf/wifi_provisioning/libwifi_provisioning.
 C:/Users/waelk/zigbee_test/build/esp-idf/espressif__led_strip/libespressif__led_strip.a
 C:/Users/waelk/zigbee_test/build/esp-idf/main/libmain.a
 C:/Users/waelk/zigbee_test/build/esp-idf/i2cdev/libi2cdev.a
+C:/Users/waelk/zigbee_test/build/esp-idf/bht1750/libbht1750.a
 C:/Users/waelk/zigbee_test/build/esp-idf/bme680/libbme680.a

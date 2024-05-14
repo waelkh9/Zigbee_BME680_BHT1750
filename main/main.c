@@ -7,7 +7,9 @@
 #include <esp_system.h>
 #include <bme680.h>
 #include <string.h>
-
+#include "bh1750_i2c.h"
+#include "bh1750_i2c_hal.h"
+/*configuration of address and pins for the BME680 sensor*/
 #define BME680_I2C_ADDR 0x77
 #define PORT 0
 #define CONFIG_EXAMPLE_I2C_MASTER_SDA 21
@@ -24,13 +26,15 @@
 #include "nvs_flash.h"
 #include "ha/esp_zigbee_ha_standard.h"
 #include "esp_zb_temperature_sensor.h"
-
-
+/* I2C pins for the BHT1750 sensor*/
+#define CONFIG_I2C_MASTER_SCL 19
+#define CONFIG_I2C_MASTER_SDA 18
 
 // Global variables
 volatile float temperature;
 volatile float humidity;
 volatile float pressure;
+volatile float lux;
 #if !defined ZB_ED_ROLE
 #error Define ZB_ED_ROLE in idf.py menuconfig to compile light (End Device) source code.
 #endif
@@ -95,51 +99,7 @@ void esp_zb_app_signal_handler(esp_zb_app_signal_t *signal_struct)
         break;
     }
 }
-void esp_zb_app_signal_handler2(esp_zb_app_signal_t *signal_struct)
-{
-    uint32_t *p_sg_p       = signal_struct->p_app_signal;
-    esp_err_t err_status = signal_struct->esp_err_status;
-    esp_zb_app_signal_type_t sig_type = *p_sg_p;
-    switch (sig_type) {
-    case ESP_ZB_ZDO_SIGNAL_SKIP_STARTUP:
-        ESP_LOGI(TAG, "Zigbee stack initialized");
-        esp_zb_bdb_start_top_level_commissioning(ESP_ZB_BDB_MODE_INITIALIZATION);
-        break;
-    case ESP_ZB_BDB_SIGNAL_DEVICE_FIRST_START:
-    case ESP_ZB_BDB_SIGNAL_DEVICE_REBOOT:
-        if (err_status == ESP_OK) {
-            ESP_LOGI(TAG, "Device started up in %s factory-reset mode", esp_zb_bdb_is_factory_new() ? "" : "non");
-            if (esp_zb_bdb_is_factory_new()) {
-                ESP_LOGI(TAG, "Start network steering");
-                esp_zb_bdb_start_top_level_commissioning(ESP_ZB_BDB_MODE_NETWORK_STEERING);
-            } else {
-                ESP_LOGI(TAG, "Device rebooted");
-                
-            }
-        } else {
-            /* commissioning failed */
-            ESP_LOGW(TAG, "Failed to initialize Zigbee stack (status: %s)", esp_err_to_name(err_status));
-        }
-        break;
-    case ESP_ZB_BDB_SIGNAL_STEERING:
-        if (err_status == ESP_OK) {
-            esp_zb_ieee_addr_t extended_pan_id;
-            esp_zb_get_extended_pan_id(extended_pan_id);
-            ESP_LOGI(TAG, "Joined network successfully (Extended PAN ID: %02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x, PAN ID: 0x%04hx, Channel:%d, Short Address: 0x%04hx)",
-                     extended_pan_id[7], extended_pan_id[6], extended_pan_id[5], extended_pan_id[4],
-                     extended_pan_id[3], extended_pan_id[2], extended_pan_id[1], extended_pan_id[0],
-                     esp_zb_get_pan_id(), esp_zb_get_current_channel(), esp_zb_get_short_address());
-        } else {
-            ESP_LOGI(TAG, "Network steering was not successful (status: %s)", esp_err_to_name(err_status));
-            esp_zb_scheduler_alarm((esp_zb_callback_t)bdb_start_top_level_commissioning_cb, ESP_ZB_BDB_MODE_NETWORK_STEERING, 1000);
-        }
-        break;
-    default:
-        ESP_LOGI(TAG, "ZDO signal: %s (0x%x), status: %s", esp_zb_zdo_signal_to_string(sig_type), sig_type,
-                 esp_err_to_name(err_status));
-        break;
-    }
-}
+
 void bme680_test(void *pvParameters)
 {
     bme680_t sensor;
@@ -195,6 +155,56 @@ void bme680_test(void *pvParameters)
 
     vTaskDelete(NULL);
 }
+void bht1750()
+{
+    bh1750_dev_t dev_1;
+    esp_err_t err;
+
+    bh1750_i2c_hal_init();
+
+    /* Device init */
+    dev_1.i2c_addr = I2C_ADDRESS_BH1750;
+    dev_1.mtreg_val = DEFAULT_MEAS_TIME_REG_VAL;
+
+    /* Perform device reset */
+    err = bh1750_i2c_dev_reset(dev_1); 
+    ESP_LOGI(TAG, "Device reset: %s", err == BH1750_OK ? "Successful" : "Failed");
+
+    err += bh1750_i2c_set_power_mode(dev_1, BH1750_POWER_ON);
+    ESP_LOGI(TAG, "Changing power mode to ON: %s", err == BH1750_OK ? "Successful" : "Failed");
+
+    /* Change measurement time with  50% optical window transmission rate */
+    err += bh1750_i2c_set_mtreg_val(&dev_1, 50);
+    ESP_LOGI(TAG, "Changing measurement time: %s", err == BH1750_OK ? "Successful" : "Failed");
+
+    /* Configure device */
+    err += bh1750_i2c_set_resolution_mode(&dev_1, BH1750_CONT_H_RES_MODE);
+    if (err == BH1750_OK)
+    {
+        ESP_LOGI(TAG, "BH1750 config successful");
+    }
+    else{
+        ESP_LOGE(TAG, "BH1750 config failed!");
+    }
+    /* End of device config */
+
+    if (err == BH1750_OK)
+    {
+        ESP_LOGI(TAG, "BH1750 initialization successful");
+        //Start reading data
+        uint16_t data_light;
+        while(1)
+        {
+            bh1750_i2c_read_data(dev_1, &data_light);
+            ESP_LOGI(TAG, "Light Intensity: %d Lux", data_light);
+            lux = data_light;
+            vTaskDelay(1000);
+        }
+    }
+    else{
+        ESP_LOGE(TAG, "BH1750 initialization failed!");
+    }
+}
 
 
 
@@ -217,6 +227,10 @@ static void esp_zb_task()
     uint16_t pressureValue = zb_temperature_to_s16(pressure);
     uint16_t pressureMin = 0;
     uint16_t pressureMax = 100;
+
+    uint16_t luxValue = zb_temperature_to_s16(lux);
+    uint16_t luxMin = 0;
+    uint16_t luxMax =7019;
 
     // Initialize Zigbee stack
     esp_zb_cfg_t zb_nwk_cfg = ESP_ZB_ZED_CONFIG();
@@ -245,14 +259,18 @@ static void esp_zb_task()
     esp_zb_pressure_meas_cluster_add_attr(esp_zb_pressure_cluster, ESP_ZB_ZCL_ATTR_PRESSURE_MEASUREMENT_VALUE_ID, &pressureValue);
     esp_zb_pressure_meas_cluster_add_attr(esp_zb_pressure_cluster, ESP_ZB_ZCL_ATTR_PRESSURE_MEASUREMENT_MIN_VALUE_ID, &pressureMin);
     esp_zb_pressure_meas_cluster_add_attr(esp_zb_pressure_cluster, ESP_ZB_ZCL_ATTR_PRESSURE_MEASUREMENT_MAX_VALUE_ID, &pressureMax);
-
+    // light cluster/attribute list
+    esp_zb_attribute_list_t *esp_zb_light_cluster = esp_zb_zcl_attr_list_create(ESP_ZB_ZCL_CLUSTER_ID_PRESSURE_MEASUREMENT);
+    esp_zb_illuminance_meas_cluster_add_attr(esp_zb_light_cluster,  ESP_ZB_ZCL_ATTR_ILLUMINANCE_MEASUREMENT_MEASURED_VALUE_ID, &luxValue);
+    esp_zb_illuminance_meas_cluster_add_attr(esp_zb_light_cluster,  ESP_ZB_ZCL_ATTR_ILLUMINANCE_MEASUREMENT_MIN_MEASURED_VALUE_ID, &luxMin);
+    esp_zb_illuminance_meas_cluster_add_attr(esp_zb_light_cluster, ESP_ZB_ZCL_ATTR_ILLUMINANCE_MEASUREMENT_MAX_MEASURED_VALUE_ID, &luxMax);
     // Create cluster list
     esp_zb_cluster_list_t *esp_zb_cluster_list = esp_zb_zcl_cluster_list_create();
     esp_zb_cluster_list_add_basic_cluster(esp_zb_cluster_list, esp_zb_basic_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
     esp_zb_cluster_list_add_temperature_meas_cluster(esp_zb_cluster_list, esp_zb_temperature_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
     esp_zb_cluster_list_add_humidity_meas_cluster(esp_zb_cluster_list, esp_zb_humidity_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
     esp_zb_cluster_list_add_pressure_meas_cluster(esp_zb_cluster_list, esp_zb_pressure_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
-
+    esp_zb_cluster_list_add_illuminance_meas_cluster(esp_zb_cluster_list, esp_zb_light_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
     //endpoint list
     esp_zb_ep_list_t *esp_zb_ep_list = esp_zb_ep_list_create();
     esp_zb_endpoint_config_t endpoint_config = {
@@ -305,6 +323,27 @@ esp_err_t zb_update_humidity(int32_t humidity)
         HA_ESP_SENSOR_ENDPOINT,
         ESP_ZB_ZCL_CLUSTER_ID_REL_HUMIDITY_MEASUREMENT,
         ESP_ZB_ZCL_CLUSTER_SERVER_ROLE,
+         ESP_ZB_ZCL_ATTR_ILLUMINANCE_MEASUREMENT_MEASURED_VALUE_ID,
+        &humidity,
+        false
+    );
+
+    /* Error check */
+    if(state != ESP_ZB_ZCL_STATUS_SUCCESS)
+    {
+        ESP_LOGE(TAG, "Updating Humidity attribute failed!");
+        return ESP_FAIL;
+    }
+
+    return ESP_OK;
+}
+esp_err_t zb_update_illuminance(int32_t lux)
+{
+    /* Update temperature attribute */
+    esp_zb_zcl_status_t state = esp_zb_zcl_set_attribute_val(
+        HA_ESP_SENSOR_ENDPOINT,
+        ESP_ZB_ZCL_CLUSTER_ID_ILLUMINANCE_MEASUREMENT,
+        ESP_ZB_ZCL_CLUSTER_SERVER_ROLE,
         ESP_ZB_ZCL_ATTR_REL_HUMIDITY_MEASUREMENT_VALUE_ID,
         &humidity,
         false
@@ -327,8 +366,10 @@ static void update_attributes(void *pvParameters)
     ESP_LOGI("update_attributes","it started");
     float temp = zb_temperature_to_s16(temperature);
     float humd = zb_temperature_to_s16(humidity);
+    float light = zb_temperature_to_s16(lux);
     ESP_ERROR_CHECK(zb_update_temperature(temp));
     ESP_ERROR_CHECK(zb_update_humidity(humd));
+    ESP_ERROR_CHECK(zb_update_illuminance(lux));
 
 
     
@@ -345,6 +386,8 @@ void app_main(void)
     ESP_ERROR_CHECK(i2cdev_init());
     ESP_ERROR_CHECK(nvs_flash_init());
     ESP_ERROR_CHECK(esp_zb_platform_config(&config));
+    xTaskCreate(bht1750, "bht1750", 4096,NULL, 1, NULL);
+    vTaskDelay(1000);
     xTaskCreate(esp_zb_task,"bme_main", 4096, NULL, 3, NULL);
     while(1){
     xTaskCreate(bme680_test, "bme_main", 4096, NULL, 5, NULL);

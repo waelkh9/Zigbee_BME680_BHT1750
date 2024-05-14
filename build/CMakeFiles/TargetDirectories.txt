@@ -661,6 +661,13 @@ C:/Users/waelk/zigbee_test/build/esp-idf/i2cdev/CMakeFiles/list_install_componen
 C:/Users/waelk/zigbee_test/build/esp-idf/i2cdev/CMakeFiles/install.dir
 C:/Users/waelk/zigbee_test/build/esp-idf/i2cdev/CMakeFiles/install/local.dir
 C:/Users/waelk/zigbee_test/build/esp-idf/i2cdev/CMakeFiles/install/strip.dir
+C:/Users/waelk/zigbee_test/build/esp-idf/bht1750/CMakeFiles/__idf_bht1750.dir
+C:/Users/waelk/zigbee_test/build/esp-idf/bht1750/CMakeFiles/edit_cache.dir
+C:/Users/waelk/zigbee_test/build/esp-idf/bht1750/CMakeFiles/rebuild_cache.dir
+C:/Users/waelk/zigbee_test/build/esp-idf/bht1750/CMakeFiles/list_install_components.dir
+C:/Users/waelk/zigbee_test/build/esp-idf/bht1750/CMakeFiles/install.dir
+C:/Users/waelk/zigbee_test/build/esp-idf/bht1750/CMakeFiles/install/local.dir
+C:/Users/waelk/zigbee_test/build/esp-idf/bht1750/CMakeFiles/install/strip.dir
 C:/Users/waelk/zigbee_test/build/esp-idf/bme680/CMakeFiles/__idf_bme680.dir
 C:/Users/waelk/zigbee_test/build/esp-idf/bme680/CMakeFiles/edit_cache.dir
 C:/Users/waelk/zigbee_test/build/esp-idf/bme680/CMakeFiles/rebuild_cache.dir
