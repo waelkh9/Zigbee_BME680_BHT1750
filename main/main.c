@@ -31,10 +31,10 @@
 #define CONFIG_I2C_MASTER_SDA 18
 
 // Global variables
-volatile float temperature;
-volatile float humidity;
-volatile float pressure;
-volatile float lux;
+volatile float temperature=0;
+volatile float humidity=0;
+volatile float pressure=0;
+volatile float lux=0;
 #if !defined ZB_ED_ROLE
 #error Define ZB_ED_ROLE in idf.py menuconfig to compile light (End Device) source code.
 #endif
@@ -51,7 +51,10 @@ static int16_t zb_humidity_to_s16(float humidity)
 {
     return (int16_t)(humidity * 100);
 }
-
+static int16_t zb_illuminance_to_s16(float lux)
+{
+    return (int16_t)(lux * 10);
+}
 static void bdb_start_top_level_commissioning_cb(uint8_t mode_mask)
 {
     ESP_ERROR_CHECK(esp_zb_bdb_start_top_level_commissioning(mode_mask));
@@ -159,7 +162,7 @@ void bht1750()
 {
     bh1750_dev_t dev_1;
     esp_err_t err;
-
+    int x=0;
     bh1750_i2c_hal_init();
 
     /* Device init */
@@ -193,17 +196,22 @@ void bht1750()
         ESP_LOGI(TAG, "BH1750 initialization successful");
         //Start reading data
         uint16_t data_light;
-        while(1)
-        {
+        while(x<3){
+        
             bh1750_i2c_read_data(dev_1, &data_light);
             ESP_LOGI(TAG, "Light Intensity: %d Lux", data_light);
             lux = data_light;
-            vTaskDelay(1000);
+            x+=1;
+            vTaskDelay(500);
+            
         }
     }
     else{
         ESP_LOGE(TAG, "BH1750 initialization failed!");
     }
+    i2c_driver_delete(0);
+    vTaskDelete(NULL);
+
 }
 
 
@@ -228,7 +236,7 @@ static void esp_zb_task()
     uint16_t pressureMin = 0;
     uint16_t pressureMax = 100;
 
-    uint16_t luxValue = zb_temperature_to_s16(lux);
+    uint16_t luxValue = lux;
     uint16_t luxMin = 0;
     uint16_t luxMax =7019;
 
@@ -256,27 +264,24 @@ static void esp_zb_task()
 
     //pressure cluster/attribute list
     esp_zb_attribute_list_t *esp_zb_pressure_cluster = esp_zb_zcl_attr_list_create(ESP_ZB_ZCL_CLUSTER_ID_PRESSURE_MEASUREMENT);
-    esp_zb_pressure_meas_cluster_add_attr(esp_zb_pressure_cluster, ESP_ZB_ZCL_ATTR_PRESSURE_MEASUREMENT_VALUE_ID, &pressureValue);
-    esp_zb_pressure_meas_cluster_add_attr(esp_zb_pressure_cluster, ESP_ZB_ZCL_ATTR_PRESSURE_MEASUREMENT_MIN_VALUE_ID, &pressureMin);
-    esp_zb_pressure_meas_cluster_add_attr(esp_zb_pressure_cluster, ESP_ZB_ZCL_ATTR_PRESSURE_MEASUREMENT_MAX_VALUE_ID, &pressureMax);
+    esp_zb_pressure_meas_cluster_add_attr(esp_zb_pressure_cluster, ESP_ZB_ZCL_ATTR_PRESSURE_MEASUREMENT_VALUE_ID, &luxValue);
+    esp_zb_pressure_meas_cluster_add_attr(esp_zb_pressure_cluster, ESP_ZB_ZCL_ATTR_PRESSURE_MEASUREMENT_MIN_VALUE_ID, &luxMin);
+    esp_zb_pressure_meas_cluster_add_attr(esp_zb_pressure_cluster, ESP_ZB_ZCL_ATTR_PRESSURE_MEASUREMENT_MAX_VALUE_ID, &luxMax);
     // light cluster/attribute list
-    esp_zb_attribute_list_t *esp_zb_light_cluster = esp_zb_zcl_attr_list_create(ESP_ZB_ZCL_CLUSTER_ID_PRESSURE_MEASUREMENT);
-    esp_zb_illuminance_meas_cluster_add_attr(esp_zb_light_cluster,  ESP_ZB_ZCL_ATTR_ILLUMINANCE_MEASUREMENT_MEASURED_VALUE_ID, &luxValue);
-    esp_zb_illuminance_meas_cluster_add_attr(esp_zb_light_cluster,  ESP_ZB_ZCL_ATTR_ILLUMINANCE_MEASUREMENT_MIN_MEASURED_VALUE_ID, &luxMin);
-    esp_zb_illuminance_meas_cluster_add_attr(esp_zb_light_cluster, ESP_ZB_ZCL_ATTR_ILLUMINANCE_MEASUREMENT_MAX_MEASURED_VALUE_ID, &luxMax);
+    
+
     // Create cluster list
     esp_zb_cluster_list_t *esp_zb_cluster_list = esp_zb_zcl_cluster_list_create();
     esp_zb_cluster_list_add_basic_cluster(esp_zb_cluster_list, esp_zb_basic_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
     esp_zb_cluster_list_add_temperature_meas_cluster(esp_zb_cluster_list, esp_zb_temperature_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
     esp_zb_cluster_list_add_humidity_meas_cluster(esp_zb_cluster_list, esp_zb_humidity_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
     esp_zb_cluster_list_add_pressure_meas_cluster(esp_zb_cluster_list, esp_zb_pressure_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
-    esp_zb_cluster_list_add_illuminance_meas_cluster(esp_zb_cluster_list, esp_zb_light_cluster, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE);
     //endpoint list
     esp_zb_ep_list_t *esp_zb_ep_list = esp_zb_ep_list_create();
     esp_zb_endpoint_config_t endpoint_config = {
         .endpoint = HA_ESP_SENSOR_ENDPOINT,
         .app_profile_id = ESP_ZB_AF_HA_PROFILE_ID,
-        .app_device_id = ESP_ZB_HA_TEMPERATURE_SENSOR_DEVICE_ID,
+        .app_device_id = ESP_ZB_HA_TEST_DEVICE_ID,
         .app_device_version = 0
     };
     esp_zb_ep_list_add_ep(esp_zb_ep_list, esp_zb_cluster_list, endpoint_config);
@@ -323,7 +328,7 @@ esp_err_t zb_update_humidity(int32_t humidity)
         HA_ESP_SENSOR_ENDPOINT,
         ESP_ZB_ZCL_CLUSTER_ID_REL_HUMIDITY_MEASUREMENT,
         ESP_ZB_ZCL_CLUSTER_SERVER_ROLE,
-         ESP_ZB_ZCL_ATTR_ILLUMINANCE_MEASUREMENT_MEASURED_VALUE_ID,
+         ESP_ZB_ZCL_ATTR_REL_HUMIDITY_MEASUREMENT_VALUE_ID,
         &humidity,
         false
     );
@@ -332,6 +337,7 @@ esp_err_t zb_update_humidity(int32_t humidity)
     if(state != ESP_ZB_ZCL_STATUS_SUCCESS)
     {
         ESP_LOGE(TAG, "Updating Humidity attribute failed!");
+        
         return ESP_FAIL;
     }
 
@@ -342,17 +348,18 @@ esp_err_t zb_update_illuminance(int32_t lux)
     /* Update temperature attribute */
     esp_zb_zcl_status_t state = esp_zb_zcl_set_attribute_val(
         HA_ESP_SENSOR_ENDPOINT,
-        ESP_ZB_ZCL_CLUSTER_ID_ILLUMINANCE_MEASUREMENT,
+        ESP_ZB_ZCL_CLUSTER_ID_PRESSURE_MEASUREMENT,
         ESP_ZB_ZCL_CLUSTER_SERVER_ROLE,
-        ESP_ZB_ZCL_ATTR_REL_HUMIDITY_MEASUREMENT_VALUE_ID,
-        &humidity,
+        ESP_ZB_ZCL_ATTR_PRESSURE_MEASUREMENT_VALUE_ID,
+        &lux,
         false
     );
 
     /* Error check */
     if(state != ESP_ZB_ZCL_STATUS_SUCCESS)
     {
-        ESP_LOGE(TAG, "Updating Humidity attribute failed!");
+        ESP_LOGE(TAG, "Updating illuminance attribute failed!");
+        
         return ESP_FAIL;
     }
 
@@ -366,10 +373,10 @@ static void update_attributes(void *pvParameters)
     ESP_LOGI("update_attributes","it started");
     float temp = zb_temperature_to_s16(temperature);
     float humd = zb_temperature_to_s16(humidity);
-    float light = zb_temperature_to_s16(lux);
+    float light = zb_illuminance_to_s16(lux);
     ESP_ERROR_CHECK(zb_update_temperature(temp));
     ESP_ERROR_CHECK(zb_update_humidity(humd));
-    ESP_ERROR_CHECK(zb_update_illuminance(lux));
+    ESP_ERROR_CHECK(zb_update_illuminance(light));
 
 
     
@@ -386,13 +393,21 @@ void app_main(void)
     ESP_ERROR_CHECK(i2cdev_init());
     ESP_ERROR_CHECK(nvs_flash_init());
     ESP_ERROR_CHECK(esp_zb_platform_config(&config));
+
+    xTaskCreate(esp_zb_task,"bme_main", 4096, NULL, 3, NULL);
+    vTaskDelay(1000);
+
+    while(1){
+    i2c_driver_delete(0);
+    ESP_ERROR_CHECK(i2cdev_init());
+    xTaskCreate(bme680_test, "bme_main", 4096, NULL, 2, NULL);
+    vTaskDelay(1000);
+
+    xTaskCreate(update_attributes, "Zigbee_main", 4096, NULL, 4, NULL);
+
+    vTaskDelay(1000);
     xTaskCreate(bht1750, "bht1750", 4096,NULL, 1, NULL);
     vTaskDelay(1000);
-    xTaskCreate(esp_zb_task,"bme_main", 4096, NULL, 3, NULL);
-    while(1){
-    xTaskCreate(bme680_test, "bme_main", 4096, NULL, 5, NULL);
-    vTaskDelay(1000);
-    
     xTaskCreate(update_attributes, "Zigbee_main", 4096, NULL, 4, NULL);
     vTaskDelay(1000);
     
