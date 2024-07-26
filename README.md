@@ -16,3 +16,4 @@ Sources:
 https://github.com/espressif/esp-zigbee-sdk/issues/233
 https://github.com/espressif/esp-zigbee-sdk/issues/74
 https://github.com/kylemwagner83
+https://github.com/espressif/esp-idf/issues/10662#issuecomment-1424903170
